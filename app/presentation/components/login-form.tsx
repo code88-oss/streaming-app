@@ -3,11 +3,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  LoginUseCase,
-  LoginRequest,
-} from "@/app/domain/use-cases/login-use-case";
-import { MockAuthService } from "@/app/infrastructure/auth/auth-service";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { login } from "@/app/actions/auth";
 
 // Định nghĩa Zod schema cho form
 const loginSchema = z.object({
@@ -24,37 +22,19 @@ const loginSchema = z.object({
 // TypeScript type từ schema
 type LoginFormData = z.infer<typeof loginSchema>;
 
-// Khởi tạo use case
-const loginUseCase = new LoginUseCase(new MockAuthService());
-
 export default function LoginForm() {
   const {
     register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setError,
+    formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
-    try {
-      const request: LoginRequest = {
-        username: data.username,
-        password: data.password,
-      };
-      const response = await loginUseCase.execute(request);
-      console.log("Login successful:", response);
-    } catch (err: any) {
-      setError("root", {
-        type: "manual",
-        message: err.message || "Invalid credentials",
-      });
-    }
-  };
+  const [state, formAction] = useActionState(login, null);
+  const { pending } = useFormStatus();
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
+    <form action={formAction} className="space-y-3 sm:space-y-4">
       <div>
         <label
           htmlFor="username"
@@ -96,16 +76,23 @@ export default function LoginForm() {
         )}
       </div>
 
-      {errors.root && (
-        <p className="text-red-500 text-xs sm:text-sm">{errors.root.message}</p>
+      {state?.error && (
+        <p className="text-red-500 text-xs sm:text-sm text-center">
+          {state.error}
+        </p>
+      )}
+      {state?.success && (
+        <p className="text-green-500 text-xs sm:text-sm text-center">
+          Login successful! Redirecting...
+        </p>
       )}
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={pending}
         className="w-full bg-[#9147ff] text-white py-2 sm:py-3 rounded-md hover:bg-[#7a3dd1] transition-colors disabled:opacity-50 text-sm sm:text-base"
       >
-        {isSubmitting ? "Logging in..." : "Log In"}
+        {pending ? "Logging in..." : "Log In"}
       </button>
     </form>
   );
