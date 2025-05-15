@@ -1,5 +1,5 @@
-import Footer from "../presentation/components/footer";
-import Header from "../presentation/components/header";
+import Footer from "../../presentation/components/footer";
+import Header from "../../presentation/components/header";
 
 export default function AppLayout({
   children,
