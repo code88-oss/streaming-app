@@ -165,3 +165,29 @@ export async function getUserFromToken() {
     return { error: "Invalid token" };
   }
 }
+
+export async function logoutAction() {
+  // Lấy refreshToken từ cookie
+  const accessToken = (await cookies()).get("accessToken")?.value;
+
+  // Gọi API logout
+  const res = await fetch(`${process.env.NESTJS_API_URL}/auth/logout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ accessToken }),
+    // credentials not needed in server action
+  });
+
+  if (!res.ok) {
+    console.error("Logout API failed", await res.text());
+  }
+
+  // Xóa cookie tokens
+  (await cookies()).delete("accessToken");
+  (await cookies()).delete("refreshToken");
+
+  // Redirect về login
+  redirect("/login");
+}
