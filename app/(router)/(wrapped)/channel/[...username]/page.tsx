@@ -19,7 +19,7 @@ export default async function StreamPage({ params }: StreamPageProps) {
         </div>
         <div>
           <Suspense fallback={<p>Loading chat...</p>}>
-            <ChatBox roomId={username} />
+            <ChatBox roomId={username[0]} />
           </Suspense>
         </div>
       </div>
