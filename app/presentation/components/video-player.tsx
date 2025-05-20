@@ -1,4 +1,3 @@
-// app/presentation/components/video-player.tsx
 "use client";
 
 import { CirclePlay } from "lucide-react";
@@ -6,16 +5,22 @@ import { useEffect, useRef, useState } from "react";
 
 interface VideoPlayerProps {
   streamKey: string;
+  giftId: string | null;
+  onGiftComplete: () => void;
 }
 
-export default function VideoPlayer({ streamKey }: VideoPlayerProps) {
+export default function VideoPlayer({
+  streamKey,
+  giftId,
+  onGiftComplete,
+}: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     let player: any = null;
 
-    // chỉ chạy khi client mount và isPlaying = true
+    // Chỉ chạy khi client mount và isPlaying = true
     if (isPlaying && videoRef.current) {
       (async () => {
         const flvjs = await import("flv.js");
@@ -25,8 +30,7 @@ export default function VideoPlayer({ streamKey }: VideoPlayerProps) {
         }
         player = flvjs.createPlayer({
           type: "flv",
-          // thay streamKey vào url nếu cần
-          url: `http://18.143.77.84:8000/live/testkey.flv`,
+          url: `http://18.143.77.84:8000/live/testkey.flv`, // Dùng streamKey động
           isLive: true,
         });
         player.attachMediaElement(videoRef.current!);
@@ -46,13 +50,12 @@ export default function VideoPlayer({ streamKey }: VideoPlayerProps) {
   }, [streamKey, isPlaying]);
 
   return (
-    <div className="rounded-lg overflow-hidden bg-black relative">
+    <div className="rounded-lg overflow-hidden bg-black relative w-full">
       {!isPlaying && (
         <button
           onClick={() => setIsPlaying(true)}
           className="absolute inset-0 z-10 bg-black bg-opacity-50 text-white text-lg flex items-center justify-center"
         >
-          {/* Giờ CirclePlay là React component */}
           <CirclePlay size={48} />
         </button>
       )}
