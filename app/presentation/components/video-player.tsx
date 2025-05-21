@@ -5,15 +5,9 @@ import { useEffect, useRef, useState } from "react";
 
 interface VideoPlayerProps {
   streamKey: string;
-  giftId: string | null;
-  onGiftComplete: () => void;
 }
 
-export default function VideoPlayer({
-  streamKey,
-  giftId,
-  onGiftComplete,
-}: VideoPlayerProps) {
+export default function VideoPlayer({ streamKey }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 

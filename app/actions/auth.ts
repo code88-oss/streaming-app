@@ -110,16 +110,25 @@ export async function login(_state: any, formData: FormData) {
       return { success: false, error: errorData.message || "Login failed" };
     }
 
-    const { accessToken } = await response.json();
-    if (!accessToken) {
-      return { success: false, error: "No access token received" };
+    const { accessToken, refreshToken } = await response.json();
+
+    if (!accessToken || !refreshToken) {
+      return { success: false, error: "Missing token(s) from server" };
     }
 
-    // Set cookie
+    // Lưu accessToken
     (await cookies()).set("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 3600,
+      maxAge: 15 * 60, // 15 phút
+      path: "/",
+    });
+
+    // Lưu refreshToken
+    (await cookies()).set("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60, // 7 ngày
       path: "/",
     });
 

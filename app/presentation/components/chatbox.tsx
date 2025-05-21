@@ -16,8 +16,7 @@ export default function ChatBox({ roomId }: ChatBoxInfoProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const user = useUserFromCookie();
-
-  console.log("roomId", roomId);
+  console.log("user", user);
   useEffect(() => {
     // Lấy message cũ từ API
     const fetchMessages = async () => {
@@ -57,7 +56,7 @@ export default function ChatBox({ roomId }: ChatBoxInfoProps) {
     if (socket && message.trim()) {
       socket.emit("sendMessage", {
         roomId: roomId,
-        senderId: user.username,
+        senderId: user.sub,
         content: message.trim(),
       });
       setMessage("");

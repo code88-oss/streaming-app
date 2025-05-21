@@ -2,39 +2,7 @@
 
 import React, { useState } from "react";
 import ChatBox from "./chatbox";
-
-// Component: StreamPreview
-interface StreamPreviewProps {
-  streamId: string;
-  status: "offline" | "starting" | "live";
-}
-
-const StreamPreview: React.FC<StreamPreviewProps> = ({ streamId, status }) => {
-  if (status !== "live") {
-    return (
-      <div className="bg-[#2a2a2e] rounded-md p-4 mb-6 text-center text-gray-400">
-        Stream chưa hoạt động
-      </div>
-    );
-  }
-
-  return (
-    <div className="mb-6">
-      <h2 className="text-lg font-semibold text-gray-300 mb-2">
-        Xem trước Stream
-      </h2>
-      <div className="relative aspect-video bg-[#2a2a2e] rounded-md overflow-hidden">
-        <video
-          autoPlay
-          muted
-          controls
-          className="w-full h-full"
-          src={`http://your-streaming-server:8000/live/${streamId}.m3u8`} // Thay bằng URL HLS thực tế
-        />
-      </div>
-    </div>
-  );
-};
+import VideoPlayer from "./video-player";
 
 // Component: StreamInfoForm
 const categories = [
@@ -283,8 +251,8 @@ const StreamerDashboard: React.FC = () => {
         ...prev,
         id: streamId,
         status: "starting",
-        streamKey: `dummy_stream_key_${streamId}`,
-        serverUrl: "rtmp://dummy-server/live",
+        streamKey: `testkey`,
+        serverUrl: "rtmp://18.143.77.84:1935/live",
       }));
       setTimeout(() => {
         setStreamData((prev) => ({ ...prev, status: "live" }));
@@ -308,16 +276,13 @@ const StreamerDashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-[#9147ff] mb-6">
           Streamer Dashboard
         </h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 w-full mb-6">
           <div className="lg:col-span-2">
-            <StreamPreview
-              streamId={streamData.id}
-              status={streamData.status}
-            />
+            {isStreaming && <VideoPlayer streamKey={"xQc"} />}
           </div>
           {isStreaming && (
             <div className="lg:col-span-1">
-              <ChatBox roomId="thai" />
+              <ChatBox roomId="xQc" />
             </div>
           )}
         </div>
