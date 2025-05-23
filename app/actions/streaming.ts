@@ -1,62 +1,17 @@
 // app/actions/stream.ts
 "use server";
 import { cookies } from "next/headers";
-import * as jwt from "jsonwebtoken";
 import { Message } from "../presentation/types/message";
+import { revalidatePath } from "next/cache";
 
-interface DecodedToken {
-  sub: number;
-  username: string;
-  email: string;
-  iat: number;
-  exp: number;
-}
-
-export async function getStreamUrl(streamId: string) {
-  const accessToken = (await cookies()).get("accessToken")?.value;
-  if (!accessToken) {
-    throw new Error("Access token not found");
-  }
-
-  try {
-    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET!) as unknown;
-    // Gọi NestJS endpoint
-    const response = await fetch(
-      `${process.env.NESTJS_API_URL}/stream/${streamId}`,
-      {
-        headers: { Cookie: `accessToken=${accessToken}` },
-      }
-    );
-    if (!response.ok) {
-      throw new Error("Không thể tải stream");
-    }
-    const data = await response.json();
-    return data.streamUrl; // http://3.123.45.67:8000/live/shroud/index.m3u8
-  } catch (error) {
-    throw new Error("Lỗi khi lấy stream URL: " + (error as Error).message);
-  }
-}
-
-export async function startStream() {
-  const accessToken = (await cookies()).get("accessToken")?.value;
-  if (!accessToken) {
-    throw new Error("Access token not found");
-  }
-
-  try {
-    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET!) as unknown;
-    const response = await fetch(`${process.env.NESTJS_API_URL}/stream/start`, {
-      method: "POST",
-      headers: { Cookie: `accessToken=${accessToken}` },
-    });
-    if (!response.ok) {
-      throw new Error("Không thể khởi tạo stream");
-    }
-    const data = await response.json();
-    return data; // { rtmpUrl, streamKey, streamId }
-  } catch (error) {
-    throw new Error("Lỗi khi khởi tạo stream: " + (error as Error).message);
-  }
+export interface UpdateStreamPayload {
+  id: string; // streamId
+  title?: string;
+  categoryId?: number;
+  streamKey?: string;
+  serverUrl?: string;
+  tagIds?: number[];
+  status?: "live" | "offline";
 }
 
 export async function getMessages(roomId: string): Promise<Message[]> {
@@ -82,4 +37,75 @@ export async function getMessages(roomId: string): Promise<Message[]> {
     console.error("Error fetching messages:", error);
     return [];
   }
+}
+
+export async function createStreamAction(formData: {
+  title: string;
+  categoryId?: string;
+  tagIds?: string[];
+  thumbnailUrl?: string;
+}) {
+  const accessToken = (await cookies()).get("accessToken")?.value;
+  try {
+    const res = await fetch(`${process.env.NESTJS_API_URL}/streams/create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to create stream");
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error creating stream:", error);
+    throw error;
+  }
+}
+
+export async function getAllStreams() {
+  try {
+    const res = await fetch(`${process.env.NESTJS_API_URL}/streams`, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch streams");
+    }
+
+    const data = await res.json();
+    console.log("data", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching streams:", error);
+    throw error;
+  }
+}
+
+export async function updateStreamAction(
+  id: string,
+  data: {
+    title?: string;
+    thumbnailUrl?: string;
+    status?: "live" | "offline";
+  }
+) {
+  const accessToken = (await cookies()).get("accessToken")?.value;
+  const res = await fetch(`${process.env.NESTJS_API_URL}/streams/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) throw new Error("Update failed");
+  return await res.json();
 }

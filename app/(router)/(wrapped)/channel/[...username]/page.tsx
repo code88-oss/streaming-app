@@ -15,7 +15,7 @@ export default async function StreamPage({ params }: StreamPageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <VideoPlayer streamKey={username} />
-          <StreamInfo username={username} />
+          {/* <StreamInfo username={username[0]} /> */}
         </div>
         <div>
           <Suspense fallback={<p>Loading chat...</p>}>

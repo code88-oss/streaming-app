@@ -48,10 +48,10 @@ export default function Header() {
                 <ul className="py-1">
                   <li>
                     <Link
-                      href="/profile"
+                      href="/creator/dashboard"
                       className="block px-4 py-2 text-sm hover:bg-[#33333a] rounded-md transition-colors"
                     >
-                      Profile
+                      Creator Dashboard
                     </Link>
                   </li>
                   <li>

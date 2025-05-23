@@ -1,39 +1,37 @@
-import Image from "next/image";
-import Link from "next/link";
-
 type Stream = {
   id: string;
-  channel: string;
   title: string;
   thumbnail: string;
   viewerCount: number;
+  channel: string;
 };
 
 export default function StreamCard({ stream }: { stream: Stream }) {
   return (
-    <Link href={`/channel/${stream.channel}`}>
-      <div className="rounded-lg overflow-hidden bg-[#2a2a2e] shadow-md hover:shadow-xl hover:bg-[#33333a] transition-transform transform hover:-translate-y-1">
-        <div className="relative h-48 w-full">
-          <Image
-            src={stream.thumbnail}
-            alt={stream.title}
-            fill
-            className="object-cover"
-          />
-          <span className="absolute top-2 left-2 bg-indigo-600 text-xs font-semibold text-white px-2 py-1 rounded">
-            LIVE
+    <div className="group relative rounded-xl overflow-hidden shadow-lg transition transform hover:scale-[1.03] hover:shadow-2xl bg-gray-900">
+      {/* Thumbnail với overlay gradient */}
+      <div className="relative h-48 w-full">
+        <img
+          src={stream.thumbnail}
+          alt={`${stream.title} thumbnail`}
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3">
+          <span className="text-sm text-white font-semibold">
+            {/* 👁️ {stream.viewerCount.toLocaleString()} watching */}
           </span>
-          <span className="absolute bottom-2 right-2 bg-black/60 text-xs text-gray-200 px-2 py-1 rounded">
-            {stream.viewerCount.toLocaleString()} viewers
-          </span>
-        </div>
-        <div className="p-3 bg-gradient-to-t from-[#1f1f23] to-transparent">
-          <p className="text-sm font-semibold text-indigo-200 truncate">
-            {stream.title}
-          </p>
-          <p className="text-xs text-indigo-100">{stream.channel}</p>
         </div>
       </div>
-    </Link>
+
+      {/* Info */}
+      <div className="p-4 space-y-1">
+        <h3 className="text-white font-bold text-lg truncate group-hover:text-purple-400">
+          {stream.title}
+        </h3>
+        <p className="text-sm text-gray-400 group-hover:text-white">
+          @{stream.channel}
+        </p>
+      </div>
+    </div>
   );
 }

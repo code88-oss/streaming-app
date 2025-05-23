@@ -1,34 +1,9 @@
-import { Suspense } from "react";
+import { getAllStreams } from "@/app/actions/streaming";
 import StreamCard from "@/app/presentation/components/card";
-
-const fetchRecommendedStreams = async () => {
-  return [
-    {
-      id: "1",
-      title: "Just Chatting with xQc",
-      thumbnail: "/logo/photo-streamer.avif",
-      viewerCount: 15000,
-      channel: "xQc",
-    },
-    {
-      id: "2",
-      title: "Valorant Ranked",
-      thumbnail: "/logo/photo-streamer.avif",
-      viewerCount: 8000,
-      channel: "shroud",
-    },
-    {
-      id: "3",
-      title: "Minecraft Speedrun",
-      thumbnail: "/logo/photo-streamer.avif",
-      viewerCount: 5000,
-      channel: "Dream",
-    },
-  ];
-};
+import { Suspense } from "react";
 
 export default async function Home() {
-  const streams = await fetchRecommendedStreams();
+  const streams = await getAllStreams();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-indigo-800 to-gray-900 text-gray-100">
@@ -59,7 +34,7 @@ export default async function Home() {
             }
           >
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {streams.map((stream) => (
+              {streams.map((stream: any) => (
                 <StreamCard key={stream.id} stream={stream} />
               ))}
             </div>
