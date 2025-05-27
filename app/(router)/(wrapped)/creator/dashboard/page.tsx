@@ -71,7 +71,6 @@ const CreatorDashboard: React.FC = () => {
   const { user, isLoading: isUserLoading } = useUserFromCookie();
   const [streamKey, setStreamKey] = useState("testkey");
   const socket = useSocket("/streams", user?.sub);
-  const sessionId = useSessionId();
 
   const {
     control,
@@ -117,12 +116,27 @@ const CreatorDashboard: React.FC = () => {
       console.log("Received streamStatus:", { streamId, status, message });
       setStreamId(streamId);
       setIsStreaming(status === "live");
-      if (message) {
-        setError(message);
-      }
+      if (message) setError(message);
     };
 
     socket.on("streamStatus", handleStreamStatus);
+
+    // Khi reload trang, tự fetch status ban đầu từ Server Action
+    const fetchInitialStatus = async () => {
+      try {
+        const res = await fetch("/api/stream", { cache: "no-store" });
+        const data = await res.json();
+        if (data?.streamId) {
+          setStreamId(data.streamId);
+          setIsStreaming(data.status === "live");
+          if (data.message) setError(data.message);
+        }
+      } catch (err) {
+        console.error("Error fetching initial stream status", err);
+      }
+    };
+
+    fetchInitialStatus();
 
     return () => {
       socket.off("streamStatus", handleStreamStatus);
@@ -219,6 +233,7 @@ const CreatorDashboard: React.FC = () => {
         await updateStreamAction(streamId, {
           status: isStreaming ? "offline" : "live",
         });
+        setIsStreaming(false);
       }
     } catch (err: any) {
       console.error("Toggle stream failed:", err);

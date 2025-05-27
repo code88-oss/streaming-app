@@ -151,16 +151,45 @@ export async function updateStreamAction(
     status?: "live" | "offline";
   }
 ) {
-  const refreshToken = (await cookies()).get("refreshToken")?.value;
+  const accessToken = (await cookies()).get("accessToken")?.value;
   const res = await fetch(`${process.env.NESTJS_API_URL}/streams/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${refreshToken}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(data),
   });
 
   if (!res.ok) throw new Error("Update failed");
   return await res.json();
+}
+
+export async function getStreamStatus() {
+  const accessToken = (await cookies()).get("accessToken")?.value;
+
+  if (!accessToken) {
+    return {
+      streamId: null,
+      status: "offline",
+      message: "User not authenticated",
+    };
+  }
+
+  const res = await fetch(`${process.env.NESTJS_API_URL}/streams/status`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    return {
+      streamId: null,
+      status: "offline",
+      message: "Failed to fetch stream status",
+    };
+  }
+
+  return res.json();
 }

@@ -7,10 +7,14 @@ export default function useSocket(namespace: string = "", userId?: string) {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
+    if (!userId) return;
     const apiUrl = process.env.NESTJS_API_URL || "http://localhost:8080";
     const socketUrl = namespace ? `${apiUrl}${namespace}` : apiUrl;
 
     const socketInstance = io(socketUrl, {
+      auth: {
+        userId: userId,
+      },
       query: userId ? { userId } : {},
       transports: ["websocket", "polling"],
       withCredentials: true,
