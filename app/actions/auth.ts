@@ -16,7 +16,7 @@ const ratelimit = new Ratelimit({
 });
 
 interface DecodedToken {
-  sub: number;
+  sub: string;
   username: string;
   email: string;
   iat: number;

@@ -7,7 +7,7 @@ import { Moon, MoonStar, SearchIcon, User as UserIcon } from "lucide-react";
 import useUserFromCookie from "../hooks/useUserFromCookie";
 
 export default function Header() {
-  const user = useUserFromCookie();
+  const { user } = useUserFromCookie();
   const router = useRouter();
 
   const handleLogout = () => {

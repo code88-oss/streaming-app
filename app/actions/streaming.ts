@@ -2,7 +2,6 @@
 "use server";
 import { cookies } from "next/headers";
 import { Message } from "../presentation/types/message";
-import { revalidatePath } from "next/cache";
 
 export interface UpdateStreamPayload {
   id: string; // streamId
@@ -12,6 +11,60 @@ export interface UpdateStreamPayload {
   serverUrl?: string;
   tagIds?: number[];
   status?: "live" | "offline";
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface Tag {
+  id: string;
+  name: string;
+}
+
+export async function getCategoriesAction(): Promise<Category[]> {
+  try {
+    const res = await fetch(`${process.env.NESTJS_API_URL}/categories`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store", // Ensure fresh data
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch categories");
+    }
+
+    const data: Category[] = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Unable to load categories");
+  }
+}
+
+export async function getTagsAction(): Promise<Tag[]> {
+  try {
+    const res = await fetch(`${process.env.NESTJS_API_URL}/tags`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store", // Ensure fresh data
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch tags");
+    }
+
+    const data: Tag[] = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching tags:", error);
+    throw new Error("Unable to load tags");
+  }
 }
 
 export async function getMessages(roomId: string): Promise<Message[]> {
@@ -44,8 +97,11 @@ export async function createStreamAction(formData: {
   categoryId?: string;
   tagIds?: string[];
   thumbnailUrl?: string;
+  streamKey: string;
+  streamUrl: string;
 }) {
   const accessToken = (await cookies()).get("accessToken")?.value;
+
   try {
     const res = await fetch(`${process.env.NESTJS_API_URL}/streams/create`, {
       method: "POST",
@@ -80,7 +136,6 @@ export async function getAllStreams() {
     }
 
     const data = await res.json();
-    console.log("data", data);
     return data;
   } catch (error) {
     console.error("Error fetching streams:", error);
@@ -96,12 +151,12 @@ export async function updateStreamAction(
     status?: "live" | "offline";
   }
 ) {
-  const accessToken = (await cookies()).get("accessToken")?.value;
+  const refreshToken = (await cookies()).get("refreshToken")?.value;
   const res = await fetch(`${process.env.NESTJS_API_URL}/streams/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `Bearer ${refreshToken}`,
     },
     body: JSON.stringify(data),
   });

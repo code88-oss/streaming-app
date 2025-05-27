@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 export default async function Home() {
   const streams = await getAllStreams();
-
+  console.log("streams", streams);
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-indigo-800 to-gray-900 text-gray-100">
       <main className="mx-auto max-w-7xl px-4 py-6">
