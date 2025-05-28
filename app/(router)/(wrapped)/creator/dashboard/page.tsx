@@ -49,8 +49,6 @@ interface Tag {
   name: string;
 }
 
-const STREAM_URL = "rtmp://18.143.77.84:1935/live";
-
 const CreatorDashboard: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [showKey, setShowKey] = useState<boolean>(false);
@@ -71,7 +69,8 @@ const CreatorDashboard: React.FC = () => {
   const { user, isLoading: isUserLoading } = useUserFromCookie();
   const [streamKey, setStreamKey] = useState("testkey");
   const socket = useSocket("/streams", user?.sub);
-
+  const urlServer = process.env.NEXT_PUBLIC_STREAM_URL;
+  const streamUrl = `rtmp://${urlServer}:1935/live`;
   const {
     control,
     handleSubmit,
@@ -100,6 +99,18 @@ const CreatorDashboard: React.FC = () => {
   });
 
   const selectedTagIds = watch("tagIds");
+
+  useEffect(() => {
+    // Kiểm tra xem đang chạy trên client
+    if (typeof window !== "undefined") {
+      let key = localStorage.getItem("streamKey");
+      if (!key) {
+        key = uuidv4();
+        localStorage.setItem("streamKey", key);
+      }
+      setStreamKey(key);
+    }
+  }, []);
 
   useEffect(() => {
     if (!socket || !user?.sub) return;
@@ -225,7 +236,7 @@ const CreatorDashboard: React.FC = () => {
           categoryId: data.categoryId || categories[0]?.id || "",
           tagIds: data.tagIds || [],
           thumbnailUrl: data.thumbnailUrl || "",
-          streamUrl: STREAM_URL,
+          streamUrl: streamUrl,
           streamKey: streamKey,
         });
         setStreamId(res.id);
@@ -355,12 +366,12 @@ const CreatorDashboard: React.FC = () => {
                   <div className="flex gap-2">
                     <input
                       className="w-full px-4 py-2 border border-gray-300 rounded-xl bg-gray-50"
-                      value={STREAM_URL}
+                      value={streamUrl}
                       readOnly
                       aria-label="Stream URL"
                     />
                     <button
-                      onClick={() => copyToClipboard(STREAM_URL)}
+                      onClick={() => copyToClipboard(streamUrl)}
                       className="p-2 rounded-xl bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
                       aria-label="Copy Stream URL"
                     >

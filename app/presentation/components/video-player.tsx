@@ -1,16 +1,21 @@
 "use client";
 
+import { useStreamStore } from "@/app/store/streamStore";
 import { CirclePlay } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface VideoPlayerProps {
-  streamKey: string;
+  streamId: string;
 }
 
-export default function VideoPlayer({ streamKey }: VideoPlayerProps) {
+export default function VideoPlayer({ streamId }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const { streamKey } = useStreamStore();
+  const urlServer = process.env.NEXT_PUBLIC_STREAM_URL;
+  const streamUrl = `${urlServer}:8000/live`;
 
+  console.log("streamfull", `${streamUrl}/${streamKey}.flv`);
   useEffect(() => {
     let player: any = null;
 
@@ -24,7 +29,7 @@ export default function VideoPlayer({ streamKey }: VideoPlayerProps) {
         }
         player = flvjs.createPlayer({
           type: "flv",
-          url: `http://18.143.77.84:8000/live/testkey.flv`, // Dùng streamKey động
+          url: `${streamUrl}/${streamKey}.flv`, // Dùng streamKey động
           isLive: true,
         });
         player.attachMediaElement(videoRef.current!);
@@ -41,7 +46,7 @@ export default function VideoPlayer({ streamKey }: VideoPlayerProps) {
         player = null;
       }
     };
-  }, [streamKey, isPlaying]);
+  }, [isPlaying]);
 
   return (
     <div className="rounded-lg overflow-hidden bg-black relative w-full">

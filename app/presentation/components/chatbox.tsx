@@ -12,11 +12,11 @@ interface ChatBoxInfoProps {
 }
 
 export default function ChatBox({ roomId }: ChatBoxInfoProps) {
-  const socket = useSocket();
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const { user } = useUserFromCookie();
-  console.log("user", user);
+  const socket = useSocket("/chat", user?.sub, roomId);
+  console.log("roomId", roomId);
   useEffect(() => {
     // Lấy message cũ từ API
     const fetchMessages = async () => {
@@ -68,7 +68,7 @@ export default function ChatBox({ roomId }: ChatBoxInfoProps) {
       <div className="flex-1 overflow-y-auto text-sm text-white space-y-1">
         {messages.map((msg, index) => (
           <p key={index} className="bg-[#2a2a2e] p-2 rounded">
-            <strong>{msg.senderId}:</strong> {msg.content}
+            <strong>{msg.sender.username}:</strong> {msg.content}
           </p>
         ))}
       </div>

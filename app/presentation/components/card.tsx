@@ -1,4 +1,9 @@
+"use client";
+
+import { useStreamStore } from "@/app/store/streamStore";
 import { formatDistanceToNow } from "date-fns";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 interface Tag {
   id: string;
@@ -20,18 +25,35 @@ interface Stream {
   status: "live" | "offline";
   startedAt: string | null;
   streamTags: StreamTag[];
+  streamKey: string;
 }
 
 export default function StreamCard({ stream }: { stream: Stream }) {
-  // Fallbacks for null values
+  const router = useRouter();
+
   const views = stream.views ?? 0;
   const channel = stream.channel ?? "Unknown Channel";
   const startedAt = stream.startedAt
     ? formatDistanceToNow(new Date(stream.startedAt), { addSuffix: true })
     : "Not started";
 
+  const handleNavigate = () => {
+    router.push(`/channel/${stream.id}`);
+  };
+
+  const { setStreamKey } = useStreamStore();
+
+  useEffect(() => {
+    if (stream?.streamKey) {
+      setStreamKey(stream.streamKey);
+    }
+  }, [stream?.streamKey, setStreamKey]);
+
   return (
-    <div className="group relative rounded-xl overflow-hidden shadow-lg transition transform hover:scale-[1.03] hover:shadow-2xl bg-gray-900">
+    <div
+      className="group relative rounded-xl overflow-hidden shadow-lg transition transform hover:scale-[1.03] hover:shadow-2xl bg-gray-900 cursor-pointer"
+      onClick={handleNavigate}
+    >
       {/* Thumbnail with overlay gradient */}
       <div className="relative h-48 w-full">
         <img
