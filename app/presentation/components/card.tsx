@@ -16,32 +16,36 @@ interface StreamTag {
   tag: Tag;
 }
 
+interface User {
+  id: string;
+  username: string;
+}
+
 interface Stream {
   id: string;
   title: string;
   thumbnailUrl: string;
   views: number | null;
-  channel: string | null;
   status: "live" | "offline";
   startedAt: string | null;
   streamTags: StreamTag[];
   streamKey: string;
+  user: User;
 }
 
 export default function StreamCard({ stream }: { stream: Stream }) {
   const router = useRouter();
+  const { setStreamKey } = useStreamStore();
 
   const views = stream.views ?? 0;
-  const channel = stream.channel ?? "Unknown Channel";
+  const username = stream.user?.username ?? "Unknown";
   const startedAt = stream.startedAt
     ? formatDistanceToNow(new Date(stream.startedAt), { addSuffix: true })
     : "Not started";
 
   const handleNavigate = () => {
-    router.push(`/channel/${stream.id}`);
+    router.push(`/channel/${stream.id}?streamKey=${stream.streamKey}`);
   };
-
-  const { setStreamKey } = useStreamStore();
 
   useEffect(() => {
     if (stream?.streamKey) {
@@ -54,7 +58,7 @@ export default function StreamCard({ stream }: { stream: Stream }) {
       className="group relative rounded-xl overflow-hidden shadow-lg transition transform hover:scale-[1.03] hover:shadow-2xl bg-gray-900 cursor-pointer"
       onClick={handleNavigate}
     >
-      {/* Thumbnail with overlay gradient */}
+      {/* Thumbnail */}
       <div className="relative h-48 w-full">
         <img
           src={stream.thumbnailUrl}
@@ -66,13 +70,13 @@ export default function StreamCard({ stream }: { stream: Stream }) {
             Live
           </span>
         )}
-        <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3 flex justify-between items-end">
-          <span className="text-sm text-white font-semibold">
-            👁️ {views.toLocaleString()} watching
-          </span>
-          <span className="text-xs text-gray-300">{startedAt}</span>
-        </div>
       </div>
+
+      {/* Views & Started Time */}
+      {/* <div className="flex justify-between items-center px-4 py-2 text-sm text-gray-300 bg-black/60">
+        <span>👁️ {views.toLocaleString()} đang xem</span>
+        <span>{startedAt}</span>
+      </div> */}
 
       {/* Info */}
       <div className="p-4 space-y-2">
@@ -80,10 +84,10 @@ export default function StreamCard({ stream }: { stream: Stream }) {
           {stream.title}
         </h3>
         <p className="text-sm text-gray-400 group-hover:text-white">
-          @{channel}
+          @{username}
         </p>
         {stream.streamTags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mt-1">
             {stream.streamTags.map((streamTag) => (
               <span
                 key={streamTag.tagId}

@@ -4,5 +4,6 @@ import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   const status = await getStreamStatus(); // gọi server action từ server
+  console.log("status", status);
   return NextResponse.json(status);
 }

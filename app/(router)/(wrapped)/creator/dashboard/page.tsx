@@ -19,11 +19,12 @@ import {
   updateStreamAction,
   getCategoriesAction,
   getTagsAction,
+  getStreamByUserId,
+  updateStreamInfoAction,
 } from "@/app/actions/streaming";
 import useUserFromCookie from "@/app/presentation/hooks/useUserFromCookie";
-import useSocket from "@/app/presentation/hooks/useSocket";
 import { v4 as uuidv4 } from "uuid";
-import { useSessionId } from "@/app/presentation/hooks/useSessionId";
+import toast from "react-hot-toast";
 
 interface StreamFormData {
   title: string;
@@ -55,22 +56,23 @@ const CreatorDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"dashboard" | "settings">(
     "dashboard"
   );
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [streamId, setStreamId] = useState<string>("");
+  const [streamKey, setStreamKey] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [isLoadingCategories, setIsLoadingCategories] = useState<boolean>(true);
-  const [isLoadingTags, setIsLoadingTags] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState<string>("");
   const [showTagDropdown, setShowTagDropdown] = useState<boolean>(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [isActionLoading, setIsActionLoading] = useState<boolean>(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState<boolean>(true);
+  const [isLoadingTags, setIsLoadingTags] = useState<boolean>(true);
+
   const tagInputRef = useRef<HTMLInputElement>(null);
   const { user, isLoading: isUserLoading } = useUserFromCookie();
-  const [streamKey, setStreamKey] = useState("testkey");
-  const socket = useSocket("/streams", user?.sub);
   const urlServer = process.env.NEXT_PUBLIC_STREAM_URL;
   const streamUrl = `rtmp://${urlServer}:1935/live`;
+
   const {
     control,
     handleSubmit,
@@ -100,59 +102,35 @@ const CreatorDashboard: React.FC = () => {
 
   const selectedTagIds = watch("tagIds");
 
+  // ✅ Fetch stream info from backend (by userId)
   useEffect(() => {
-    // Kiểm tra xem đang chạy trên client
-    if (typeof window !== "undefined") {
-      let key = localStorage.getItem("streamKey");
-      if (!key) {
-        key = uuidv4();
-        localStorage.setItem("streamKey", key);
-      }
-      setStreamKey(key);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!socket || !user?.sub) return;
-
-    const handleStreamStatus = ({
-      streamId,
-      status,
-      message,
-    }: {
-      streamId: string;
-      status: string;
-      message: string;
-    }) => {
-      console.log("Received streamStatus:", { streamId, status, message });
-      setStreamId(streamId);
-      setIsStreaming(status === "live");
-      if (message) setError(message);
-    };
-
-    socket.on("streamStatus", handleStreamStatus);
-
-    // Khi reload trang, tự fetch status ban đầu từ Server Action
-    const fetchInitialStatus = async () => {
+    const fetchStream = async () => {
+      if (!user?.sub) return;
       try {
-        const res = await fetch("/api/stream", { cache: "no-store" });
-        const data = await res.json();
-        if (data?.streamId) {
-          setStreamId(data.streamId);
-          setIsStreaming(data.status === "live");
-          if (data.message) setError(data.message);
+        const stream = await getStreamByUserId(user.sub);
+
+        if (!stream) {
+          // ✅ Không có stream → ready to create
+          setStreamId(""); // clear state
+          setStreamKey(uuidv4()); // hoặc sinh key mới nếu muốn, nhưng nên để server xử lý
+          setIsStreaming(false);
+          return;
         }
+
+        // ✅ Có stream thì load thông tin
+        setStreamId(stream.id);
+        setStreamKey(stream.streamKey);
+        setIsStreaming(stream.status === "live");
+        setValue("title", stream.title || "");
+        setValue("categoryId", stream.category?.id || "");
+        setValue("tagIds", stream.streamTags?.map((t: any) => t.tagId) || []);
+        setValue("thumbnailUrl", stream.thumbnailUrl || "");
       } catch (err) {
-        console.error("Error fetching initial stream status", err);
+        console.error("❌ Failed to load stream", err);
       }
     };
-
-    fetchInitialStatus();
-
-    return () => {
-      socket.off("streamStatus", handleStreamStatus);
-    };
-  }, [socket, user]);
+    fetchStream();
+  }, [user?.sub, setValue]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -161,7 +139,6 @@ const CreatorDashboard: React.FC = () => {
         const data = await getCategoriesAction();
         setCategories(data);
       } catch (err: any) {
-        console.error("Error fetching categories:", err);
         setError(err.message || "Failed to load categories");
       } finally {
         setIsLoadingCategories(false);
@@ -174,7 +151,6 @@ const CreatorDashboard: React.FC = () => {
         const data = await getTagsAction();
         setTags(data);
       } catch (err: any) {
-        console.error("Error fetching tags:", err);
         setError(err.message || "Failed to load tags");
       } finally {
         setIsLoadingTags(false);
@@ -205,14 +181,9 @@ const CreatorDashboard: React.FC = () => {
     );
   };
 
-  const handleTagInputFocus = () => {
-    setShowTagDropdown(true);
-  };
-
-  const handleTagInputBlur = () => {
+  const handleTagInputFocus = () => setShowTagDropdown(true);
+  const handleTagInputBlur = () =>
     setTimeout(() => setShowTagDropdown(false), 200);
-  };
-
   const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && filteredTags.length > 0) {
       e.preventDefault();
@@ -222,7 +193,7 @@ const CreatorDashboard: React.FC = () => {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Copied to clipboard");
+    toast.success("Copied to clipboard");
   };
 
   const onStreamToggle = async (data: StreamFormData) => {
@@ -236,18 +207,18 @@ const CreatorDashboard: React.FC = () => {
           categoryId: data.categoryId || categories[0]?.id || "",
           tagIds: data.tagIds || [],
           thumbnailUrl: data.thumbnailUrl || "",
-          streamUrl: streamUrl,
-          streamKey: streamKey,
+          streamUrl,
+          streamKey,
         });
         setStreamId(res.id);
+        setIsStreaming(true);
       } else {
         await updateStreamAction(streamId, {
           status: isStreaming ? "offline" : "live",
         });
-        setIsStreaming(false);
+        setIsStreaming(!isStreaming);
       }
     } catch (err: any) {
-      console.error("Toggle stream failed:", err);
       setError(err.message || "Failed to toggle stream");
     } finally {
       setIsActionLoading(false);
@@ -263,13 +234,15 @@ const CreatorDashboard: React.FC = () => {
     setIsActionLoading(true);
     try {
       setError(null);
-      await updateStreamAction(streamId, {
+      await updateStreamInfoAction(streamId, {
         title: data.title,
         thumbnailUrl: data.thumbnailUrl,
+        categoryId: data.categoryId,
+        tagIds: data.tagIds,
       });
-      alert("Stream info updated");
+
+      toast.success("Stream info updated");
     } catch (err: any) {
-      console.error("Failed to update stream info:", err);
       setError(err.message || "Failed to update stream info");
     } finally {
       setIsActionLoading(false);
@@ -281,9 +254,8 @@ const CreatorDashboard: React.FC = () => {
     setIsActionLoading(true);
     try {
       setError(null);
-      alert("Settings saved successfully");
+      toast.success("Settings saved successfully");
     } catch (err: any) {
-      console.error("Failed to save settings:", err);
       setError(err.message || "Failed to save settings");
     } finally {
       setIsActionLoading(false);

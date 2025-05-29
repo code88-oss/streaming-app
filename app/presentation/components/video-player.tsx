@@ -6,16 +6,15 @@ import { useEffect, useRef, useState } from "react";
 
 interface VideoPlayerProps {
   streamId: string;
+  streamKey: string;
 }
 
-export default function VideoPlayer({ streamId }: VideoPlayerProps) {
+export default function VideoPlayer({ streamId, streamKey }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const { streamKey } = useStreamStore();
   const urlServer = process.env.NEXT_PUBLIC_STREAM_URL;
-  const streamUrl = `${urlServer}:8000/live`;
+  const streamUrl = `http://${urlServer}:8000/live`;
 
-  console.log("streamfull", `${streamUrl}/${streamKey}.flv`);
   useEffect(() => {
     let player: any = null;
 
@@ -29,7 +28,7 @@ export default function VideoPlayer({ streamId }: VideoPlayerProps) {
         }
         player = flvjs.createPlayer({
           type: "flv",
-          url: `${streamUrl}/${streamKey}.flv`, // Dùng streamKey động
+          url: `${streamUrl}/${streamKey}.flv`,
           isLive: true,
         });
         player.attachMediaElement(videoRef.current!);

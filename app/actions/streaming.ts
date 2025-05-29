@@ -143,11 +143,38 @@ export async function getAllStreams() {
   }
 }
 
+export async function getStreamByUserId(userId: string) {
+  try {
+    const res = await fetch(`${process.env.NESTJS_API_URL}/streams/${userId}`, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    if (res.status === 404) {
+      // ✅ Không có stream nào cho user này
+      return null;
+    }
+
+    if (!res.ok) {
+      const errorMsg = `Failed to fetch stream. Status: ${res.status}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error("❌ Error fetching stream by userId:", error);
+    throw error;
+  }
+}
+
 export async function updateStreamAction(
   id: string,
   data: {
     title?: string;
     thumbnailUrl?: string;
+    categories?: [];
+    tags?: [];
     status?: "live" | "offline";
   }
 ) {
@@ -192,4 +219,57 @@ export async function getStreamStatus() {
   }
 
   return res.json();
+}
+
+interface UpdateStreamInfoPayload {
+  title?: string;
+  thumbnailUrl?: string;
+  categoryId?: string;
+  tagIds?: string[];
+}
+
+export async function updateStreamInfoAction(
+  streamId: string,
+  data: UpdateStreamInfoPayload
+) {
+  const accessToken = (await cookies()).get("accessToken")?.value;
+
+  if (!accessToken) {
+    throw new Error("Unauthorized: Missing access token");
+  }
+
+  const res = await fetch(
+    `${process.env.NESTJS_API_URL}/streams/${streamId}/info`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("❌ Failed to update stream info:", errorText);
+    throw new Error("Failed to update stream info");
+  }
+
+  return await res.json();
+}
+
+export async function getStreamByStreamIdAction(streamId: string) {
+  const res = await fetch(
+    `${process.env.NESTJS_API_URL}/streams/by-id/${streamId}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    }
+  );
+
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to fetch stream");
+
+  return await res.json();
 }

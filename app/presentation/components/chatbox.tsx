@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import useSocket from "../hooks/useSocket";
 import useUserFromCookie from "../hooks/useUserFromCookie";
-import Link from "next/link";
 import { Message } from "../types/message";
 import { getMessages } from "@/app/actions/streaming";
+import toast from "react-hot-toast";
 
 interface ChatBoxInfoProps {
   roomId: string;
@@ -16,7 +16,7 @@ export default function ChatBox({ roomId }: ChatBoxInfoProps) {
   const [message, setMessage] = useState("");
   const { user } = useUserFromCookie();
   const socket = useSocket("/chat", user?.sub, roomId);
-  console.log("roomId", roomId);
+
   useEffect(() => {
     // Lấy message cũ từ API
     const fetchMessages = async () => {
@@ -50,7 +50,7 @@ export default function ChatBox({ roomId }: ChatBoxInfoProps) {
 
   const sendMessage = () => {
     if (!user) {
-      alert("Vui lòng đăng nhập để chat.");
+      toast.error("Vui lòng đăng nhập để chat.");
       return;
     }
     if (socket && message.trim()) {
