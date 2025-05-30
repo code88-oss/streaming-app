@@ -13,7 +13,7 @@ export default function VideoPlayer({ streamId, streamKey }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const urlServer = process.env.NEXT_PUBLIC_STREAM_URL;
-  const streamUrl = `http://${urlServer}:8443/live`;
+  const streamUrl = `https://${urlServer}/live`;
 
   useEffect(() => {
     let player: any = null;
