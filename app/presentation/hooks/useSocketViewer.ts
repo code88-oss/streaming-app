@@ -10,7 +10,7 @@ export default function useSocketViewer(streamId: string) {
   useEffect(() => {
     if (!streamId) return;
 
-    const socket = io("http://localhost:8080/streams", {
+    const socket = io(`${process.env.NESTJS_API_URL}/streams`, {
       query: { streamId },
       transports: ["websocket"],
       withCredentials: true,
