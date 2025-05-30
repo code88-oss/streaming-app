@@ -13,7 +13,8 @@ export default function useSocket(
   useEffect(() => {
     if (!userId) return;
 
-    const apiUrl = process.env.NESTJS_API_URL || "http://localhost:8080";
+    const apiUrl =
+      process.env.NESTJS_API_URL || "https://streaming-app-be-1.onrender.com";
     const socketUrl = namespace ? `${apiUrl}${namespace}` : apiUrl;
 
     const socketInstance = io(socketUrl, {
