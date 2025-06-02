@@ -1,7 +1,4 @@
-import { useEffect } from "react";
-
 export default function SocialLoginButtons() {
-  // Hàm gọi API để lấy profile
   const fetchUserProfile = async () => {
     try {
       const response = await fetch(
@@ -21,19 +18,11 @@ export default function SocialLoginButtons() {
     }
   };
 
-  // Gọi API khi component mount
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
   return (
-    <a
-      href={`${process.env.HOST_API_URL}/auth/google`}
-      className="mt-4 flex justify-center gap-4"
-    >
+    <div onClick={fetchUserProfile} className="mt-4 flex justify-center gap-4">
       <button className="bg-[#ff0000] text-white px-4 py-2 rounded-md hover:bg-[#cc0000] w-full">
         Google
       </button>
-    </a>
+    </div>
   );
 }
