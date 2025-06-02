@@ -10,10 +10,16 @@ export default function useSocketViewer(streamId: string) {
   useEffect(() => {
     if (!streamId) return;
 
-    const socket = io(`${process.env.NESTJS_API_URL}/streams`, {
+    const apiUrl =
+      process.env.NESTJS_API_URL || "https://streaming-app-be-1.onrender.com";
+
+    const socket = io(`${apiUrl}/streams`, {
       query: { streamId },
-      transports: ["websocket"],
+      transports: ["websocket", "polling"],
       withCredentials: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     socketRef.current = socket;
